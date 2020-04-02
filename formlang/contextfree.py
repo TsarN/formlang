@@ -131,6 +131,9 @@ class Grammar:
                 res.append(prod.serialize())
         return "\n".join(res)
 
+    def write_file(self, file_obj):
+        file_obj.write(self.serialize())
+
     @classmethod
     def deserialize(cls, s):
         res = Grammar()
@@ -144,6 +147,10 @@ class Grammar:
                 start = True
             res.productions.append(prod)
         return res
+
+    @classmethod
+    def from_file(cls, file_obj):
+        return cls.deserialize(file_obj.read())
 
     def produce(self, nonterminal):
         return [i.rhs for i in self.productions if i.lhs == nonterminal]

@@ -4,10 +4,11 @@ import sys
 
 
 def main():
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} <file>")
+    if len(sys.argv) < 3:
+        print(f"Usage: {sys.argv[0]} <input> <output>")
         return
     with open(sys.argv[1]) as f:
-        grammar = Grammar.deserialize(f.read())
+        grammar = Grammar.from_file(f)
     grammar.normalize()
-    print(grammar.serialize())
+    with open(sys.argv[2], "w") as f:
+        grammar.write_file(f)
