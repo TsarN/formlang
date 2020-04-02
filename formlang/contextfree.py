@@ -1,3 +1,6 @@
+from queue import Queue
+
+
 class Terminal:
     def __init__(self, value):
         self.value = str(value)
@@ -128,7 +131,6 @@ class Grammar:
                 res.append(prod.serialize())
         return "\n".join(res)
 
-
     @classmethod
     def deserialize(cls, s):
         res = Grammar()
@@ -143,12 +145,27 @@ class Grammar:
             res.productions.append(prod)
         return res
 
+    def produce(self, nonterminal):
+        return [i.rhs for i in self.productions if i.lhs == nonterminal]
+
+    def get_epsilon_producers(self):
+        result = set()
+        prev = -1
+        while len(result) != prev:
+            prev = len(result)
+            for prod in self.productions:
+                if all([i in result for i in prod.rhs]):
+                    result.add(prod.lhs)
+        return result
+
     def normalize(self):
         self.eliminate_start()
         self.eliminate_nonsolitary_terminals()
         self.eliminate_long_productions()
         self.eliminate_epsilon()
         self.eliminate_unit_rules()
+        self.eliminate_useless_nonterminals()
+        self.eliminate_repetitions()
 
     def is_normalized(self):
         for prod in self.productions:
@@ -192,16 +209,27 @@ class Grammar:
         self.productions = prods
 
     def eliminate_epsilon(self):
-        epsilon = set()
+        eps = self.get_epsilon_producers()
+        new_prods = []
         for prod in self.productions:
-            if prod.lhs != self.start and not prod.rhs:
-                epsilon.add(prod.lhs)
-        if not epsilon:
-            return
-        for prod in self.productions:
-            prod.rhs = [i for i in prod.rhs if i not in epsilon]
-        self.productions = [i for i in self.productions if i.rhs or i.lhs == self.start]
-        self.eliminate_epsilon()
+            rhs_eps = []
+            for i, t in enumerate(prod.rhs):
+                if t in eps:
+                    rhs_eps.append(i)
+            if not rhs_eps:
+                new_prods.append(prod)
+                continue
+            for mask in range(1 << len(rhs_eps)):
+                banned = set()
+                for i, t in enumerate(rhs_eps):
+                    if mask & (1 << i):
+                        banned.add(t)
+                new_prod = [i for i in prod.rhs if i not in banned]
+                new_prods.append(Production(prod.lhs, new_prod))
+        new_prods = [i for i in new_prods if i.rhs]
+        if self.start in eps:
+            new_prods.append(Production(self.start, []))
+        self.productions = new_prods
 
     def eliminate_unit_rules(self):
         units = dict()
@@ -231,3 +259,29 @@ class Grammar:
 
         self.productions = new_prods
         self.eliminate_unit_rules()
+
+    def eliminate_useless_nonterminals(self):
+        used = set()
+        queue = Queue()
+        used.add(self.start)
+        queue.put(self.start)
+
+        while not queue.empty():
+            term = queue.get()
+            for prod in self.produce(term):
+                for el in prod:
+                    if type(el) == Nonterminal and el not in used:
+                        used.add(el)
+                        queue.put(el)
+
+        self.productions = [i for i in self.productions if i.lhs in used]
+
+    def eliminate_repetitions(self):
+        used = set()
+        new_prods = []
+        for i in self.productions:
+            s = str(i)
+            if s not in used:
+                used.add(s)
+                new_prods.append(i)
+        self.productions = new_prods
