@@ -302,6 +302,13 @@ class Grammar:
         self.normalize()
         seq = list(map(Terminal, seq))
         n = len(seq)
+
+        if n == 0:
+            for prod in self.productions:
+                if prod.lhs == self.start and prod.rhs == []:
+                    return True
+            return False
+
         dp = [[set() for _ in range(n)] for _ in range(n)]
 
         for i in range(n):
@@ -322,7 +329,7 @@ class Grammar:
                             continue
                         dp[i][j].add(prod.lhs)
 
-        return bool(dp[0][n])
+        return self.start in dp[0][-1]
 
     def path_query(self, graph):
         self.normalize()

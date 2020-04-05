@@ -3,7 +3,7 @@
 
 Usage:
 
-    $ pipenv run python -m formlang <file>
+    $ pipenv run python -m formlang <arguments>
 
 Testing:
 
