@@ -1,3 +1,4 @@
+from collections import defaultdict
 from copy import deepcopy
 from queue import Queue
 
@@ -114,7 +115,8 @@ class Grammar:
     def __eq__(self, that):
         if type(that) != Grammar:
             raise ValueError(f"Comparing a Grammar to {type(that)}")
-        return self.start == that.start and self.productions == that.productions
+        return self.start == that.start and \
+            sorted(self.productions, key=str) == sorted(that.productions, key=str)
 
     def __repr__(self):
         return f"Grammar({self.start!r}, {self.productions!r})"
@@ -173,8 +175,8 @@ class Grammar:
             self.eliminate_long_productions()
             self.eliminate_epsilon()
             self.eliminate_unit_rules()
-        self.eliminate_useless_nonterminals()
         self.eliminate_repetitions()
+        self.eliminate_useless_nonterminals()
 
     def is_normalized(self):
         for prod in self.productions:
@@ -225,14 +227,11 @@ class Grammar:
             for i, t in enumerate(prod.rhs):
                 if t in eps:
                     rhs_eps.append(i)
-            if not rhs_eps:
-                new_prods.append(prod)
-                continue
             for mask in range(1 << len(rhs_eps)):
                 banned = set()
                 for i, t in enumerate(rhs_eps):
                     if mask & (1 << i):
-                        banned.add(t)
+                        banned.add(prod.rhs[t])
                 new_prod = [i for i in prod.rhs if i not in banned]
                 new_prods.append(Production(prod.lhs, new_prod))
         new_prods = [i for i in new_prods if i.rhs]
@@ -241,33 +240,37 @@ class Grammar:
         self.productions = new_prods
 
     def eliminate_unit_rules(self):
-        units = dict()
-        for prod in self.productions:
-            if len(prod.rhs) != 1:
-                continue
-            rhs = prod.rhs[0]
-            if type(rhs) is not Nonterminal:
-                continue
-            if rhs not in units:
-                units[rhs] = set()
-            units[rhs].add(prod.lhs)
-
-        if not units:
-            return
-
-        new_prods = []
+        units = set()
+        units_dict = defaultdict(set)
 
         for prod in self.productions:
-            for lhs in units.get(prod.lhs, []):
-                if lhs in units:
+            units.add((prod.lhs, prod.lhs))
+            units_dict[prod.lhs].add(prod.lhs)
+
+        prev = -1
+        while prev != len(units):
+            prev = len(units)
+            for prod in self.productions:
+                if len(prod.rhs) != 1:
                     continue
-                new_prods.append(Production(lhs, prod.rhs))
-            if len(prod.rhs) == 1 and type(prod.rhs[0]) == Nonterminal:
-                continue
-            new_prods.append(Production(prod.lhs, prod.rhs))
+                b = prod.rhs[0]
+                if type(b) != Nonterminal:
+                    continue
+                for a in units_dict[prod.lhs]:
+                    pair = (a, b)
+                    if pair not in units:
+                        units.add(pair)
+                        units_dict[b].add(a)
 
-        self.productions = new_prods
-        self.eliminate_unit_rules()
+        new_prods = self.productions[:]
+
+        for prod in self.productions:
+            b = prod.lhs
+            for a in units_dict[b]:
+                new_prods.append(Production(a, prod.rhs))
+
+        self.productions = [i for i in new_prods if len(i.rhs) != 1 or type(i.rhs[0]) != Nonterminal]
+
 
     def eliminate_useless_nonterminals(self):
         used = set()
