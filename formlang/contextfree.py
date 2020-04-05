@@ -1,3 +1,4 @@
+from copy import deepcopy
 from queue import Queue
 
 
@@ -166,11 +167,12 @@ class Grammar:
         return result
 
     def normalize(self):
-        self.eliminate_start()
-        self.eliminate_nonsolitary_terminals()
-        self.eliminate_long_productions()
-        self.eliminate_epsilon()
-        self.eliminate_unit_rules()
+        if not self.is_normalized():
+            self.eliminate_start()
+            self.eliminate_nonsolitary_terminals()
+            self.eliminate_long_productions()
+            self.eliminate_epsilon()
+            self.eliminate_unit_rules()
         self.eliminate_useless_nonterminals()
         self.eliminate_repetitions()
 
@@ -294,9 +296,9 @@ class Grammar:
         self.productions = new_prods
 
     def recognize(self, seq):
+        self.normalize()
         seq = list(map(Terminal, seq))
         n = len(seq)
-        self.normalize()
         dp = [[set() for _ in range(n)] for _ in range(n)]
 
         for i in range(n):
@@ -317,4 +319,53 @@ class Grammar:
                             continue
                         dp[i][j].add(prod.lhs)
 
-        return dp[0][n]
+        return bool(dp[0][n])
+
+    def path_query(self, graph):
+        self.normalize()
+        n = graph.number_of_nodes()
+        dp = set()
+
+        eps = self.get_epsilon_producers()
+
+        for i in range(n):
+            for el in eps:
+                dp.add((el, i, i))
+
+        for u, v, symbol in graph.edges(data="symbol"):
+            for prod in self.productions:
+                if prod.rhs == [Terminal(symbol)]:
+                    dp.add((prod.lhs, u, v))
+
+        rem = deepcopy(dp)
+
+        while rem:
+            n1, u, v = rem.pop()
+
+            for n2, w, _u in dp:
+                if _u != u:
+                    continue
+                for prod in self.productions:
+                    if prod.rhs != [n1, n2]:
+                        continue
+                    new = (prod.lhs, w, v)
+                    if new in dp:
+                        continue
+                    dp.add(new)
+                    rem.add(new)
+
+            for n2, _v, w in dp:
+                if _v != v:
+                    continue
+                for prod in self.productions:
+                    if prod.rhs != [n1, n2]:
+                        continue
+                    new = (prod.lhs, u, w)
+                    if new in dp:
+                        continue
+                    dp.add(new)
+                    rem.add(new)
+
+        return {(u, v) for n, u, v in dp if n == self.start}
+
+
