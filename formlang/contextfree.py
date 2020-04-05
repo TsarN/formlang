@@ -169,12 +169,13 @@ class Grammar:
         return result
 
     def normalize(self):
-        if not self.is_normalized():
-            self.eliminate_start()
-            self.eliminate_nonsolitary_terminals()
-            self.eliminate_long_productions()
-            self.eliminate_epsilon()
-            self.eliminate_unit_rules()
+        if self.is_normalized():
+            return
+        self.eliminate_start()
+        self.eliminate_nonsolitary_terminals()
+        self.eliminate_long_productions()
+        self.eliminate_epsilon()
+        self.eliminate_unit_rules()
         self.eliminate_repetitions()
         self.eliminate_useless_nonterminals()
 
