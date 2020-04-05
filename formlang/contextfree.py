@@ -292,3 +292,29 @@ class Grammar:
                 used.add(s)
                 new_prods.append(i)
         self.productions = new_prods
+
+    def recognize(self, seq):
+        seq = list(map(Terminal, seq))
+        n = len(seq)
+        self.normalize()
+        dp = [[set() for _ in range(n)] for _ in range(n)]
+
+        for i in range(n):
+            dp[i][i] = {p.lhs for p in self.productions if p.rhs == [seq[i]]}
+
+        for d in range(1, n):
+            for i in range(0, n - d):
+                j = i + d
+                for k in range(i, j):
+                    # looking for productions A -> BC
+                    # where B in dp[i][k] and C in dp[k+1][j]
+                    for prod in self.productions:
+                        if len(prod.rhs) != 2:
+                            continue
+                        if prod.rhs[0] not in dp[i][k]:
+                            continue
+                        if prod.rhs[1] not in dp[k + 1][j]:
+                            continue
+                        dp[i][j].add(prod.lhs)
+
+        return dp[0][n]
