@@ -230,8 +230,8 @@ class Grammar:
                 banned = set()
                 for i, t in enumerate(rhs_eps):
                     if mask & (1 << i):
-                        banned.add(prod.rhs[t])
-                new_prod = [i for i in prod.rhs if i not in banned]
+                        banned.add(t)
+                new_prod = [p for i, p in enumerate(prod.rhs) if i not in banned]
                 new_prods.append(Production(prod.lhs, new_prod))
         new_prods = [i for i in new_prods if i.rhs]
         if self.start in eps:
