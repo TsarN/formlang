@@ -168,29 +168,31 @@ class Grammar:
                     result.add(prod.lhs)
         return result
 
-    def normalize(self):
-        if self.is_normalized():
+    def normalize(self, weak=False):
+        if self.is_normalized(weak):
             return
-        self.eliminate_start()
+        if not weak:
+            self.eliminate_start()
         self.eliminate_nonsolitary_terminals()
         self.eliminate_long_productions()
-        self.eliminate_epsilon()
+        if not weak:
+            self.eliminate_epsilon()
         self.eliminate_unit_rules()
         self.eliminate_repetitions()
         self.eliminate_useless_nonterminals()
 
-    def is_normalized(self):
+    def is_normalized(self, weak=False):
         for prod in self.productions:
-            if not prod.rhs and prod.lhs != self.start:
+            if not prod.rhs and prod.lhs != self.start and not weak:
                 return False
             if len(prod.rhs) == 1 and type(prod.rhs[0]) != Terminal:
                 return False
             if len(prod.rhs) > 2:
                 return False
             if len(prod.rhs) == 2:
-                if type(prod.rhs[0]) != Nonterminal or prod.rhs[0] == self.start:
+                if type(prod.rhs[0]) != Nonterminal or (prod.rhs[0] == self.start and not weak):
                     return False
-                if type(prod.rhs[1]) != Nonterminal or prod.rhs[1] == self.start:
+                if type(prod.rhs[1]) != Nonterminal or (prod.rhs[1] == self.start and not weak):
                     return False
         return True
 
@@ -333,50 +335,50 @@ class Grammar:
         return self.start in dp[0][-1]
 
     def path_query(self, graph):
-        self.normalize()
+        self.normalize(weak=True)
         n = graph.number_of_nodes()
-        dp = set()
+        dp = list()
+        lhs = defaultdict(list)
 
         eps = self.get_epsilon_producers()
 
         for i in range(n):
             for el in eps:
-                dp.add((el, i, i))
+                dp.append((el, i, i))
 
         for u, v, symbol in graph.edges(data="symbol"):
             for prod in self.productions:
                 if prod.rhs == [Terminal(symbol)]:
-                    dp.add((prod.lhs, u, v))
+                    dp.append((prod.lhs, u, v))
+
+        for prod in self.productions:
+            if len(prod.rhs) != 2:
+                continue
+            lhs[tuple(prod.rhs)].append(prod.lhs)
 
         rem = deepcopy(dp)
 
         while rem:
-            n1, u, v = rem.pop()
+            n1, u, v = rem.pop(0)
 
             for n2, w, _u in dp:
                 if _u != u:
                     continue
-                for prod in self.productions:
-                    if prod.rhs != [n1, n2]:
-                        continue
-                    new = (prod.lhs, w, v)
+                for n3 in lhs[n2, n1]:
+                    new = (n3, w, v)
                     if new in dp:
                         continue
-                    dp.add(new)
-                    rem.add(new)
+                    dp.append(new)
+                    rem.append(new)
 
             for n2, _v, w in dp:
                 if _v != v:
                     continue
-                for prod in self.productions:
-                    if prod.rhs != [n1, n2]:
-                        continue
-                    new = (prod.lhs, u, w)
+                for n3 in lhs[n1, n2]:
+                    new = (n3, u, w)
                     if new in dp:
                         continue
-                    dp.add(new)
-                    rem.add(new)
+                    dp.append(new)
+                    rem.append(new)
 
-        return {(u, v) for n, u, v in dp if n == self.start}
-
-
+        return sorted([(u, v) for n, u, v in dp if n == self.start])
