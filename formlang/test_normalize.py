@@ -222,6 +222,31 @@ S a T b T
 T x
 """))
 
+def test_eliminate_epsilon2():
+    g = Grammar.deserialize("""\
+S a T b T
+T S c S d S
+S eps
+T eps
+""")
+    Nonterminal.instances = 0
+    g.eliminate_epsilon()
+    assert(g == Grammar.deserialize("""\
+S eps
+S a b
+S a T b
+S a b T
+S a T b T
+T c d
+T S c d
+T c S d
+T S c S d
+T c d S
+T S c d S
+T c S d S
+T S c S d S
+"""))
+
 def test_eliminate_unit_rules():
     g = Grammar.deserialize("""\
 S A A
@@ -239,4 +264,40 @@ A x
 A y
 B x
 C y
+"""))
+
+
+def test_eliminate_unit_rules2():
+    g = Grammar.deserialize("""\
+S T
+S U
+T V a T
+T V a V
+T T a V
+U V b U
+U V b V
+U U b V
+V a V b V
+V b V a V
+V eps
+""")
+    Nonterminal.instances = 0
+    g.eliminate_unit_rules()
+    g.eliminate_repetitions()
+    assert(g == Grammar.deserialize("""\
+S V a T
+S V a V
+S T a V
+S V b U
+S V b V
+S U b V
+T V a T
+T V a V
+T T a V
+U V b U
+U V b V
+U U b V
+V a V b V
+V b V a V
+V eps
 """))
