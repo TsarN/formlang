@@ -138,3 +138,105 @@ def test_normalize():
         g.normalize()
         assert(g.is_normalized())
         assert(g == target)
+
+def test_eliminate_start():
+    g = Grammar.deserialize("""\
+S A B
+S eps
+A a
+B b
+A B S B
+""")
+    Nonterminal.instances = 0
+    g.eliminate_start()
+    assert(g == Grammar.deserialize("""\
+A1 S
+S A B
+S eps
+A a
+B b
+A B S B
+"""))
+
+
+def test_eliminate_nonsolitary_terminals():
+    g = Grammar.deserialize("""\
+S a B A b a B A c
+A c S c
+A eps
+B A d
+""")
+    Nonterminal.instances = 0
+    g.eliminate_nonsolitary_terminals()
+    assert(g == Grammar.deserialize("""\
+S A1 B A A2 A1 B A A3
+A A3 S A3
+A eps
+B A A4
+A1 a
+A2 b
+A3 c
+A4 d
+"""))
+
+
+def test_eliminate_long_productions():
+    g = Grammar.deserialize("""\
+S A B C D
+A eps
+A A A
+A a
+B w o w
+C A
+D u S v
+""")
+    Nonterminal.instances = 0
+    g.eliminate_long_productions()
+    assert(g == Grammar.deserialize("""\
+S A A1
+A1 B A2
+A2 C D
+A eps
+A A A
+A a
+B w A3
+A3 o w
+C A
+D u A4
+A4 S v
+"""))
+
+def test_eliminate_epsilon():
+    g = Grammar.deserialize("""\
+S a T b T
+T x
+T eps
+""")
+    Nonterminal.instances = 0
+    g.eliminate_epsilon()
+    assert(g == Grammar.deserialize("""\
+S a b
+S a b T
+S a T b
+S a T b T
+T x
+"""))
+
+def test_eliminate_unit_rules():
+    g = Grammar.deserialize("""\
+S A A
+A B
+A C
+B x
+C y
+""")
+    Nonterminal.instances = 0
+    g.eliminate_unit_rules()
+    g.eliminate_repetitions()
+    assert(g == Grammar.deserialize("""\
+S A A
+A x
+A y
+B x
+C y
+"""))
