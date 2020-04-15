@@ -1,11 +1,8 @@
 from formlang.contextfree import *
+from formlang.samplegrammars import *
 
 def test_even_palindromes():
-    g = Grammar.deserialize("""\
-S eps
-S a S a
-S b S b
-""")
+    g = Grammar.deserialize(even_palindromes)
 
     assert(g.recognize(""))
     assert(g.recognize("aa"))
@@ -27,12 +24,7 @@ S b S b
 
 
 def test_even_palindromes_nonempty():
-    g = Grammar.deserialize("""\
-S a a
-S b b
-S a S a
-S b S b
-""")
+    g = Grammar.deserialize(even_palindromes_nonempty)
 
     assert(g.recognize("aa"))
     assert(g.recognize("abba"))
@@ -54,45 +46,30 @@ S b S b
 
 
 def test_well_formed_parentheses():
-    g = Grammar.deserialize("""\
-S S S
-S a S b
-S a b
-""")
+    for i in [well_formed_parentheses, well_formed_parentheses_ambiguous]:
+        g = Grammar.deserialize(i)
 
-    assert(g.recognize("ab"))
-    assert(g.recognize("abab"))
-    assert(g.recognize("aabb"))
-    assert(g.recognize("aabbab"))
-    assert(g.recognize("abaabb"))
-    assert(g.recognize("ababab"))
-    assert(g.recognize("aaabbb"))
-    assert(g.recognize("abaaabbb"))
-    assert(g.recognize("abaaababbb"))
-    assert(not g.recognize(""))
-    assert(not g.recognize("a"))
-    assert(not g.recognize("b"))
-    assert(not g.recognize("aa"))
-    assert(not g.recognize("abb"))
-    assert(not g.recognize("aba"))
-    assert(not g.recognize("abba"))
-    assert(not g.recognize("ababbbababab"))
+        assert(g.recognize(""))
+        assert(g.recognize("ab"))
+        assert(g.recognize("abab"))
+        assert(g.recognize("aabb"))
+        assert(g.recognize("aabbab"))
+        assert(g.recognize("abaabb"))
+        assert(g.recognize("ababab"))
+        assert(g.recognize("aaabbb"))
+        assert(g.recognize("abaaabbb"))
+        assert(g.recognize("abaaababbb"))
+        assert(not g.recognize("a"))
+        assert(not g.recognize("b"))
+        assert(not g.recognize("aa"))
+        assert(not g.recognize("abb"))
+        assert(not g.recognize("aba"))
+        assert(not g.recognize("abba"))
+        assert(not g.recognize("ababbbababab"))
 
 
 def test_unequal_number():
-    g = Grammar.deserialize("""\
-S T
-S U
-T V a T
-T V a V
-T T a V
-U V b U
-U V b V
-U U b V
-V a V b V
-V b V a V
-V eps
-""")
+    g = Grammar.deserialize(unequal_number)
 
     assert(g.recognize("a"))
     assert(g.recognize("aa"))

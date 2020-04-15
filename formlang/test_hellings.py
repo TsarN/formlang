@@ -2,6 +2,7 @@ import io
 
 from formlang.contextfree import *
 from formlang.graph import *
+from formlang.samplegrammars import *
 
 
 GRAPH1 = read_graph_from_file(io.StringIO("""\
@@ -28,23 +29,20 @@ GRAPH3 = read_graph_from_file(io.StringIO("""\
 4 b 2
 """))
 
-GRAMMAR1 = Grammar.deserialize("""\
-S eps
-S a S a
-S b S b
-""")
+GRAPH4 = read_graph_from_file(io.StringIO("""\
+0 a 0
+0 b 1
+1 b 2
+2 a 2
+"""))
 
-GRAMMAR2 = Grammar.deserialize("""\
-S a
-S b
-S a S a
-S b S b
-""")
+GRAMMAR1 = Grammar.deserialize(even_palindromes)
 
-GRAMMAR3 = Grammar.deserialize("""\
-S eps
-S a S b S
-""")
+GRAMMAR2 = Grammar.deserialize(odd_palindromes_nonempty)
+
+GRAMMAR3a = Grammar.deserialize(well_formed_parentheses)
+
+GRAMMAR3b = Grammar.deserialize(well_formed_parentheses_ambiguous)
 
 def test_hellings_graph1_grammar1():
     graph = GRAPH1
@@ -86,19 +84,19 @@ def test_hellings_graph1_grammar2():
 
 def test_hellings_graph1_grammar3():
     graph = GRAPH1
-    grammar = GRAMMAR3
-    answer = [
-        ( 0, 0 ),
-        ( 0, 2 ),
-        ( 0, 3 ),
-        ( 1, 1 ),
-        ( 1, 2 ),
-        ( 1, 3 ),
-        ( 2, 2 ),
-        ( 2, 3 ),
-        ( 3, 3 ),
-    ]
-    assert grammar.path_query(graph) == answer
+    for grammar in [GRAMMAR3a, GRAMMAR3b]:
+        answer = [
+            ( 0, 0 ),
+            ( 0, 2 ),
+            ( 0, 3 ),
+            ( 1, 1 ),
+            ( 1, 2 ),
+            ( 1, 3 ),
+            ( 2, 2 ),
+            ( 2, 3 ),
+            ( 3, 3 ),
+        ]
+        assert grammar.path_query(graph) == answer
 
 
 def test_hellings_graph2_grammar1():
@@ -126,14 +124,14 @@ def test_hellings_graph2_grammar2():
 
 def test_hellings_graph2_grammar3():
     graph = GRAPH2
-    grammar = GRAMMAR3
-    answer = [
-        ( 0, 0 ),
-        ( 0, 2 ),
-        ( 1, 1 ),
-        ( 2, 2 ),
-    ]
-    assert grammar.path_query(graph) == answer
+    for grammar in [GRAMMAR3a, GRAMMAR3b]:
+        answer = [
+            ( 0, 0 ),
+            ( 0, 2 ),
+            ( 1, 1 ),
+            ( 2, 2 ),
+        ]
+        assert grammar.path_query(graph) == answer
 
 
 def test_hellings_graph3_grammar1():
@@ -188,14 +186,51 @@ def test_hellings_graph3_grammar2():
 
 def test_hellings_graph3_grammar3():
     graph = GRAPH3
-    grammar = GRAMMAR3
+    for grammar in [GRAMMAR3a, GRAMMAR3b]:
+        answer = [
+            ( 0, 0 ),
+            ( 0, 4 ),
+            ( 1, 1 ),
+            ( 1, 3 ),
+            ( 2, 2 ),
+            ( 3, 3 ),
+            ( 4, 4 ),
+        ]
+        assert grammar.path_query(graph) == answer
+
+
+def test_hellings_graph4_grammar1():
+    graph = GRAPH4
+    grammar = GRAMMAR1
     answer = [
-        ( 0, 0 ),
-        ( 0, 4 ),
-        ( 1, 1 ),
-        ( 1, 3 ),
-        ( 2, 2 ),
-        ( 3, 3 ),
-        ( 4, 4 ),
+        (0, 0),
+        (0, 2),
+        (1, 1),
+        (2, 2),
     ]
     assert grammar.path_query(graph) == answer
+
+
+def test_hellings_graph4_grammar2():
+    graph = GRAPH4
+    grammar = GRAMMAR2
+    answer = [
+        (0, 0),
+        (0, 1),
+        (1, 2),
+        (2, 2),
+    ]
+    assert grammar.path_query(graph) == answer
+
+
+def test_hellings_graph4_grammar3():
+    graph = GRAPH4
+    for grammar in [GRAMMAR3a, GRAMMAR3b]:
+        answer = [
+            (0, 0),
+            (0, 1),
+            (0, 2),
+            (1, 1),
+            (2, 2),
+        ]
+        assert grammar.path_query(graph) == answer
