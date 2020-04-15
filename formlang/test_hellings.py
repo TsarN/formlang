@@ -36,6 +36,8 @@ GRAPH4 = read_graph_from_file(io.StringIO("""\
 2 a 2
 """))
 
+GRAPH5 = read_graph_from_file(io.StringIO(""))
+
 GRAMMAR1 = Grammar.deserialize(even_palindromes)
 
 GRAMMAR2 = Grammar.deserialize(odd_palindromes_nonempty)
@@ -233,4 +235,25 @@ def test_hellings_graph4_grammar3():
             (1, 1),
             (2, 2),
         ]
+        assert grammar.path_query(graph) == answer
+
+
+def test_hellings_graph5_grammar1():
+    graph = GRAPH5
+    grammar = GRAMMAR1
+    answer = []
+    assert grammar.path_query(graph) == answer
+
+
+def test_hellings_graph5_grammar2():
+    graph = GRAPH5
+    grammar = GRAMMAR2
+    answer = []
+    assert grammar.path_query(graph) == answer
+
+
+def test_hellings_graph5_grammar3():
+    graph = GRAPH5
+    for grammar in [GRAMMAR3a, GRAMMAR3b]:
+        answer = []
         assert grammar.path_query(graph) == answer
