@@ -2,6 +2,8 @@ from collections import defaultdict
 from copy import deepcopy
 from queue import Queue
 
+import scipy.sparse
+
 
 class Terminal:
     def __init__(self, value):
@@ -301,6 +303,12 @@ class Grammar:
                 new_prods.append(i)
         self.productions = new_prods
 
+    def get_nonterminals(self):
+        res = set()
+        for prod in self.productions:
+            res.add(prod.lhs)
+        return list(res)
+
     def recognize(self, seq):
         self.normalize()
         seq = list(map(Terminal, seq))
@@ -334,7 +342,65 @@ class Grammar:
 
         return self.start in dp[0][-1]
 
-    def path_query(self, graph):
+    def path_query(self, graph, algorithm="matrix"):
+        if algorithm == "matrix":
+            return self._path_query_matrix(graph)
+        if algorithm == "hellings":
+            return self._path_query_hellings(graph)
+        raise ValueError(f"Unsupported algorithm: {algorithm}")
+
+    def _path_query_matrix(self, graph):
+        self.normalize(weak=True)
+        n = graph.number_of_nodes()
+        eps = self.get_epsilon_producers()
+        pairs = defaultdict(list)
+
+        for i in range(n):
+            for el in eps:
+                pairs[el].append((i, i))
+
+        for u, v, symbol in graph.edges(data="symbol"):
+            for prod in self.productions:
+                if prod.rhs == [Terminal(symbol)]:
+                    pairs[prod.lhs].append((u, v))
+
+        matrices = dict()
+        for a in self.get_nonterminals():
+            rows = []
+            cols = []
+            data = []
+            for r, c in pairs[a]:
+                rows.append(r)
+                cols.append(c)
+                data.append(True)
+            matrices[a] = scipy.sparse.csr_matrix((data, (rows, cols)),
+                                                  shape=(n, n), dtype=bool)
+
+        keep_going = True
+        while keep_going:
+            keep_going = False
+            for prod in self.productions:
+                if len(prod.rhs) != 2:
+                    continue
+                a = matrices[prod.rhs[0]]
+                b = matrices[prod.rhs[1]]
+                new = matrices[prod.lhs] + a * b
+                if (new != matrices[prod.lhs]).count_nonzero() > 0:
+                    matrices[prod.lhs] = new
+                    keep_going = True
+
+        res = []
+
+        m = matrices[self.start]
+
+        for u in range(n):
+            for v in range(n):
+                if m[u, v]:
+                    res.append((u, v))
+
+        return res
+
+    def _path_query_hellings(self, graph):
         self.normalize(weak=True)
         n = graph.number_of_nodes()
         dp = list()
