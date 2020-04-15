@@ -1,5 +1,5 @@
 # formlang
-[![Build Status](https://api.travis-ci.org/tsarn/formlang.svg?branch=cyk-hellings)](https://travis-ci.org/tsarn/formlang)
+[![Build Status](https://api.travis-ci.org/tsarn/formlang.svg?branch=master)](https://travis-ci.org/tsarn/formlang)
 
 Usage:
 
