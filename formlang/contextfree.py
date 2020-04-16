@@ -10,6 +10,8 @@ class Terminal:
         return self.value
 
     def __eq__(self, that):
+        if type(that) is Nonterminal:
+            return False
         if type(that) is not Terminal:
             raise ValueError(f"Comparing a Terminal to {type(that)}")
         return self.value == that.value
@@ -36,6 +38,8 @@ class Nonterminal:
         return self.name
 
     def __eq__(self, that):
+        if type(that) is Terminal:
+            return False
         if type(that) is not Nonterminal:
             raise ValueError(f"Comparing a Nonterminal to {type(that)}")
         return self.name == that.name
@@ -82,6 +86,13 @@ class Production:
             else:
                 rhs.append(Nonterminal(i))
         return Production(lhs, rhs)
+
+    @classmethod
+    def deserialize_extended(cls, s):
+        from formlang.algo.regex import productions_from_regex
+        lhs, regex = s.split(" ", 1)
+        lhs = Nonterminal(lhs)
+        return productions_from_regex(lhs, regex), lhs
 
     def clone(self):
         return Production(self.lhs, self.rhs)
@@ -143,11 +154,11 @@ class Grammar:
         for line in s.split("\n"):
             if not line:
                 continue
-            prod = Production.deserialize(line)
+            prods, lhs = Production.deserialize_extended(line)
             if not start:
-                res.start = prod.lhs
+                res.start = lhs
                 start = True
-            res.productions.append(prod)
+            res.productions += prods
         return res
 
     @classmethod
