@@ -2,7 +2,8 @@ from collections import defaultdict
 from copy import deepcopy
 from queue import Queue
 
-import scipy.sparse
+from scipy.sparse import csr_matrix, lil_matrix, kron, eye
+import numpy as np
 
 
 class Terminal:
@@ -109,7 +110,7 @@ class Grammar:
         if not productions:
             productions = []
         self.start = start
-        self.productions = list(productions)
+        self.productions = list(map(Production.clone, productions))
 
     def __str__(self):
         return f"{self.start} \u21e8\n" + "\n".join(map(str, self.productions))
@@ -124,7 +125,7 @@ class Grammar:
         return f"Grammar({self.start!r}, {self.productions!r})"
 
     def clone(self):
-        return Grammar(self.productions)
+        return Grammar(self.start, self.productions)
 
     def serialize(self):
         res = []
@@ -343,11 +344,174 @@ class Grammar:
         return self.start in dp[0][-1]
 
     def path_query(self, graph, algorithm="matrix"):
+        if algorithm == "tensor":
+            return self._path_query_tensor(graph)
         if algorithm == "matrix":
             return self._path_query_matrix(graph)
         if algorithm == "hellings":
             return self._path_query_hellings(graph)
         raise ValueError(f"Unsupported algorithm: {algorithm}")
+
+    setattr(path_query, "algorithms", ("hellings", "matrix", "tensor"))
+
+    def _path_query_tensor(self, graph):
+        symbols = set()
+        def _debug(a, k):
+            for i in range(k):
+                for j in range(k):
+                    s = ""
+                    for symbol in symbols:
+                        if not a[symbol][i, j]:
+                            continue
+                        s += str(symbol)
+                    if not s:
+                        s = "."
+                    print(s, end=" ")
+                print()
+            input()
+        # Step 1. Build a RSM
+
+        entries = dict()
+        exits = dict()
+        term_states = set()
+        start_states = set()
+        nodes = []
+        m = 0
+
+        for prod in self.productions:
+            symbols.add(prod.lhs)
+            if prod.lhs not in entries:
+                entries[prod.lhs] = m
+                start_states.add(m)
+                nodes.append(dict())
+                m += 1
+            v = entries[prod.lhs]
+
+            for i, symbol in enumerate(prod.rhs):
+                symbols.add(symbol)
+                if i == len(prod.rhs) - 1:
+                    if prod.lhs not in exits:
+                        exits[prod.lhs] = m
+                        term_states.add(m)
+                        nodes.append(dict())
+                        m += 1
+                    u = exits[prod.lhs]
+                else:
+                    u = nodes[v].get(symbol)
+                    if u is None:
+                        u = m
+                        nodes.append(dict())
+                        m += 1
+                nodes[v][symbol] = u
+                v = u
+
+        sym_states = [set() for _ in range(m)]
+        for symbol, v in entries.items():
+            sym_states[v].add(symbol)
+
+        # Step 2. Build adjacency matrices for the RSM
+
+        matrices = dict()
+        for symbol in symbols:
+            rows = []
+            cols = []
+            data = []
+
+            for v in range(m):
+                u = nodes[v].get(symbol)
+                if u is None:
+                    continue
+                rows.append(v)
+                cols.append(u)
+                data.append(True)
+
+            matrices[symbol] = csr_matrix((data, (rows, cols)),
+                                          shape=(m, m), dtype=bool)
+
+        # _debug(matrices, m)
+
+        # Step 3. Build adjacency matrices for the graph
+
+        n = graph.number_of_nodes()
+
+        g_matrices = dict()
+        for symbol in symbols:
+            rows = []
+            cols = []
+            data = []
+
+            if type(symbol) is Terminal:
+                for v, u, _symbol in graph.edges(data="symbol"):
+                    if _symbol != symbol.value:
+                        continue
+                    rows.append(v)
+                    cols.append(u)
+                    data.append(True)
+
+            g_matrices[symbol] = csr_matrix((data, (rows, cols)),
+                                            shape=(n, n), dtype=bool)
+
+        # _debug(g_matrices, n)
+
+        # Step 4. Populate the matrix with epsilon loopbacks
+
+        eps = self.get_epsilon_producers()
+        for symbol in eps:
+            g_matrices[symbol] += eye(n, dtype=bool, format="csr")
+
+        # Step 5. Do the computation
+
+        keep_going = True
+        while keep_going:
+            keep_going = False
+
+            k = n * m
+            t = csr_matrix((k, k), dtype=bool)
+            for symbol in symbols:
+                tmp = kron(matrices[symbol], g_matrices[symbol], "csr")
+                t += tmp.tocsr()
+
+            # Transitive closure
+            factor = t.copy()
+            for i in range(k):
+                new = t + t * factor
+                if (new != t).count_nonzero() == 0:
+                    break
+                t = new
+
+            upd = dict()
+
+            for i in range(k):
+                for j in range(k):
+                    if not t[i, j]:
+                        continue
+                    s = i // n
+                    f = j // n
+                    x = i % n
+                    y = j % n
+                    if s not in start_states or f not in term_states:
+                        continue
+                    for sym in sym_states[s]:
+                        if not g_matrices[sym][x, y]:
+                            if sym not in upd:
+                                upd[sym] = lil_matrix((n, n), dtype=bool)
+                            upd[sym][x, y] = True
+                            keep_going = True
+
+            for symbol, x in upd.items():
+                g_matrices[symbol] += x.tocsr()
+
+        res = []
+
+        mtx = g_matrices[self.start]
+
+        for u in range(n):
+            for v in range(n):
+                if mtx[u, v]:
+                    res.append((u, v))
+
+        return res
+
 
     def _path_query_matrix(self, graph):
         self.normalize(weak=True)
@@ -365,16 +529,16 @@ class Grammar:
                     pairs[prod.lhs].append((u, v))
 
         matrices = dict()
-        for a in self.get_nonterminals():
+        for symbol in self.get_nonterminals():
             rows = []
             cols = []
             data = []
-            for r, c in pairs[a]:
+            for r, c in pairs[symbol]:
                 rows.append(r)
                 cols.append(c)
                 data.append(True)
-            matrices[a] = scipy.sparse.csr_matrix((data, (rows, cols)),
-                                                  shape=(n, n), dtype=bool)
+            matrices[symbol] = csr_matrix((data, (rows, cols)),
+                                          shape=(n, n), dtype=bool)
 
         keep_going = True
         while keep_going:
