@@ -7,27 +7,13 @@ from formlang.contextfree import Terminal
 
 
 def path_query_tensor(grammar, graph):
-    symbols = set()
-    def _debug(a, k):
-        for i in range(k):
-            for j in range(k):
-                s = ""
-                for symbol in symbols:
-                    if not a[symbol][i, j]:
-                        continue
-                    s += str(symbol)
-                if not s:
-                    s = "."
-                print(s, end=" ")
-            print()
-        input()
     # Step 1. Build a RSM
 
     entries = dict()
-    exits = dict()
+    symbols = set()
     term_states = set()
     start_states = set()
-    nodes = []
+    nodes = [dict()]
     m = 0
 
     for prod in grammar.productions:
@@ -41,21 +27,14 @@ def path_query_tensor(grammar, graph):
 
         for i, symbol in enumerate(prod.rhs):
             symbols.add(symbol)
-            if i == len(prod.rhs) - 1:
-                if prod.lhs not in exits:
-                    exits[prod.lhs] = m
-                    term_states.add(m)
-                    nodes.append(dict())
-                    m += 1
-                u = exits[prod.lhs]
-            else:
-                u = nodes[v].get(symbol)
-                if u is None:
-                    u = m
-                    nodes.append(dict())
-                    m += 1
+            u = nodes[v].get(symbol)
+            if u is None:
+                u = m
+                nodes.append(dict())
+                m += 1
             nodes[v][symbol] = u
             v = u
+        term_states.add(v)
 
     sym_states = [set() for _ in range(m)]
     for symbol, v in entries.items():
@@ -80,8 +59,6 @@ def path_query_tensor(grammar, graph):
         matrices[symbol] = csr_matrix((data, (rows, cols)),
                                       shape=(m, m), dtype=bool)
 
-    # _debug(matrices, m)
-
     # Step 3. Build adjacency matrices for the graph
 
     n = graph.number_of_nodes()
@@ -102,8 +79,6 @@ def path_query_tensor(grammar, graph):
 
         g_matrices[symbol] = csr_matrix((data, (rows, cols)),
                                         shape=(n, n), dtype=bool)
-
-    # _debug(g_matrices, n)
 
     # Step 4. Populate the matrix with epsilon loopbacks
 
