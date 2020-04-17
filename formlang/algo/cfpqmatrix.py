@@ -33,12 +33,12 @@ def path_query_matrix(grammar, graph):
         matrices[symbol] = csr_matrix((data, (rows, cols)),
                                       shape=(n, n), dtype=bool)
 
+    good_prods = [i for i in grammar.productions if len(i.rhs) == 2]
+
     keep_going = True
     while keep_going:
         keep_going = False
-        for prod in grammar.productions:
-            if len(prod.rhs) != 2:
-                continue
+        for prod in good_prods:
             a = matrices[prod.rhs[0]]
             b = matrices[prod.rhs[1]]
             new = matrices[prod.lhs] + a * b
