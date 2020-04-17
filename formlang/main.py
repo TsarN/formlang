@@ -48,5 +48,6 @@ def cfpq(grammar, graph, output, algorithm):
 
 @cli.command()
 @click.argument("path", type=click.Path(file_okay=False, exists=True))
-def benchmark(path):
-    benchmark_cfpq(path)
+@click.argument("ds")
+def benchmark(path, ds):
+    benchmark_cfpq(path, ds)

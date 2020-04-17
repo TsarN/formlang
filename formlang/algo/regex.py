@@ -57,30 +57,34 @@ def _expr(s, lhs):
 
 
 def _seq(s, lhs):
-    t = _star(s, lhs)
+    t1 = _star(s, lhs)
     ch = s.peek()
 
     if ch in [None, "|", "*", ")"]:
-        return t
+        return t1
 
     follow = Nonterminal()
     t2 = _seq(s, follow)
 
-    res = []
+    f = [i for i in t2 if i.lhs == follow]
 
-    for i in t:
-        if i.lhs != lhs:
-            res.append(i)
+    if len(f) == 1:
+        for i in t2:
+            if i.lhs != follow:
+                t1.append(i)
 
-    for i in t2:
-        if i.lhs == follow:
-            for j in t:
-                if j.lhs == lhs:
-                    res.append(Production(lhs, j.rhs + i.rhs))
-        else:
-            t.append(i)
+        for i in t1:
+            if i.lhs == lhs:
+                i.rhs += f[0].rhs
 
-    return res
+        return t1
+
+    t1 += t2
+    for i in t1:
+        if i.lhs == lhs:
+            i.rhs.append(follow)
+
+    return t1
 
 
 def _star(s, lhs):
@@ -94,6 +98,9 @@ def _star(s, lhs):
     for i in t:
         if i.lhs == lhs:
             i.lhs = repeat
+        for j in range(len(i.rhs)):
+            if i.rhs[j] == lhs:
+                i.rhs[j] = repeat
 
     t.append(Production(lhs, []))
     t.append(Production(lhs, [repeat, lhs]))

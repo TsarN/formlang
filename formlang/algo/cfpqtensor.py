@@ -99,9 +99,8 @@ def path_query_tensor(grammar, graph):
             t += tmp.tocsr()
 
         # Transitive closure
-        factor = t.copy()
         for i in range(k):
-            new = t + t * factor
+            new = t + t * t
             if (new != t).count_nonzero() == 0:
                 break
             t = new
