@@ -1,5 +1,4 @@
 from collections import defaultdict
-from copy import deepcopy
 from queue import Queue
 
 
@@ -11,6 +10,8 @@ class Terminal:
         return self.value
 
     def __eq__(self, that):
+        if type(that) is Nonterminal:
+            return False
         if type(that) is not Terminal:
             raise ValueError(f"Comparing a Terminal to {type(that)}")
         return self.value == that.value
@@ -37,6 +38,8 @@ class Nonterminal:
         return self.name
 
     def __eq__(self, that):
+        if type(that) is Terminal:
+            return False
         if type(that) is not Nonterminal:
             raise ValueError(f"Comparing a Nonterminal to {type(that)}")
         return self.name == that.name
@@ -84,6 +87,13 @@ class Production:
                 rhs.append(Nonterminal(i))
         return Production(lhs, rhs)
 
+    @classmethod
+    def deserialize_extended(cls, s):
+        from formlang.algo.regex import productions_from_regex
+        lhs, regex = s.split(" ", 1)
+        lhs = Nonterminal(lhs)
+        return productions_from_regex(lhs, regex), lhs
+
     def clone(self):
         return Production(self.lhs, self.rhs)
 
@@ -107,7 +117,7 @@ class Grammar:
         if not productions:
             productions = []
         self.start = start
-        self.productions = list(productions)
+        self.productions = list(map(Production.clone, productions))
 
     def __str__(self):
         return f"{self.start} \u21e8\n" + "\n".join(map(str, self.productions))
@@ -122,7 +132,7 @@ class Grammar:
         return f"Grammar({self.start!r}, {self.productions!r})"
 
     def clone(self):
-        return Grammar(self.productions)
+        return Grammar(self.start, self.productions)
 
     def serialize(self):
         res = []
@@ -144,11 +154,11 @@ class Grammar:
         for line in s.split("\n"):
             if not line:
                 continue
-            prod = Production.deserialize(line)
+            prods, lhs = Production.deserialize_extended(line)
             if not start:
-                res.start = prod.lhs
+                res.start = lhs
                 start = True
-            res.productions.append(prod)
+            res.productions += prods
         return res
 
     @classmethod
@@ -301,6 +311,12 @@ class Grammar:
                 new_prods.append(i)
         self.productions = new_prods
 
+    def get_nonterminals(self):
+        res = set()
+        for prod in self.productions:
+            res.add(prod.lhs)
+        return list(res)
+
     def recognize(self, seq):
         self.normalize()
         seq = list(map(Terminal, seq))
@@ -334,51 +350,19 @@ class Grammar:
 
         return self.start in dp[0][-1]
 
-    def path_query(self, graph):
-        self.normalize(weak=True)
-        n = graph.number_of_nodes()
-        dp = list()
-        lhs = defaultdict(list)
+    def path_query(self, graph, algorithm="matrix"):
+        if algorithm == "tensor":
+            from formlang.algo.cfpqtensor import path_query_tensor
+            return path_query_tensor(self, graph)
 
-        eps = self.get_epsilon_producers()
+        if algorithm == "matrix":
+            from formlang.algo.cfpqmatrix import path_query_matrix
+            return path_query_matrix(self, graph)
 
-        for i in range(n):
-            for el in eps:
-                dp.append((el, i, i))
+        if algorithm == "hellings":
+            from formlang.algo.hellings import path_query_hellings
+            return path_query_hellings(self, graph)
 
-        for u, v, symbol in graph.edges(data="symbol"):
-            for prod in self.productions:
-                if prod.rhs == [Terminal(symbol)]:
-                    dp.append((prod.lhs, u, v))
+        raise ValueError(f"Unsupported algorithm: {algorithm}")
 
-        for prod in self.productions:
-            if len(prod.rhs) != 2:
-                continue
-            lhs[tuple(prod.rhs)].append(prod.lhs)
-
-        rem = deepcopy(dp)
-
-        while rem:
-            n1, u, v = rem.pop(0)
-
-            for n2, w, _u in dp:
-                if _u != u:
-                    continue
-                for n3 in lhs[n2, n1]:
-                    new = (n3, w, v)
-                    if new in dp:
-                        continue
-                    dp.append(new)
-                    rem.append(new)
-
-            for n2, _v, w in dp:
-                if _v != v:
-                    continue
-                for n3 in lhs[n1, n2]:
-                    new = (n3, u, w)
-                    if new in dp:
-                        continue
-                    dp.append(new)
-                    rem.append(new)
-
-        return sorted([(u, v) for n, u, v in dp if n == self.start])
+    setattr(path_query, "algorithms", ("hellings", "matrix", "tensor"))

@@ -1,9 +1,10 @@
 import io
 
+import pytest
+
 from formlang.contextfree import *
 from formlang.graph import *
 from formlang.samplegrammars import *
-
 
 GRAPH1 = read_graph_from_file(io.StringIO("""\
 0 a 1
@@ -46,7 +47,12 @@ GRAMMAR3a = Grammar.deserialize(well_formed_parentheses)
 
 GRAMMAR3b = Grammar.deserialize(well_formed_parentheses_ambiguous)
 
-def test_hellings_graph1_grammar1():
+
+@pytest.fixture(params=Grammar.path_query.algorithms)
+def algorithm(request):
+    yield request.param
+
+def test_cfpq_graph1_grammar1(algorithm):
     graph = GRAPH1
     grammar = GRAMMAR1
     answer = [
@@ -61,10 +67,10 @@ def test_hellings_graph1_grammar1():
         ( 2, 2 ),
         ( 3, 3 ),
     ]
-    assert grammar.path_query(graph) == answer
+    assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph1_grammar2():
+def test_cfpq_graph1_grammar2(algorithm):
     graph = GRAPH1
     grammar = GRAMMAR2
     answer = [
@@ -81,10 +87,10 @@ def test_hellings_graph1_grammar2():
         ( 3, 2 ),
         ( 3, 3 ),
     ]
-    assert grammar.path_query(graph) == answer
+    assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph1_grammar3():
+def test_cfpq_graph1_grammar3(algorithm):
     graph = GRAPH1
     for grammar in [GRAMMAR3a, GRAMMAR3b]:
         answer = [
@@ -98,10 +104,10 @@ def test_hellings_graph1_grammar3():
             ( 2, 3 ),
             ( 3, 3 ),
         ]
-        assert grammar.path_query(graph) == answer
+        assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph2_grammar1():
+def test_cfpq_graph2_grammar1(algorithm):
     graph = GRAPH2
     grammar = GRAMMAR1
     answer = [
@@ -109,10 +115,10 @@ def test_hellings_graph2_grammar1():
         ( 1, 1 ),
         ( 2, 2 ),
     ]
-    assert grammar.path_query(graph) == answer
+    assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph2_grammar2():
+def test_cfpq_graph2_grammar2(algorithm):
     graph = GRAPH2
     grammar = GRAMMAR2
     answer = [
@@ -121,10 +127,10 @@ def test_hellings_graph2_grammar2():
         ( 1, 2 ),
         ( 2, 1 ),
     ]
-    assert grammar.path_query(graph) == answer
+    assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph2_grammar3():
+def test_cfpq_graph2_grammar3(algorithm):
     graph = GRAPH2
     for grammar in [GRAMMAR3a, GRAMMAR3b]:
         answer = [
@@ -133,10 +139,10 @@ def test_hellings_graph2_grammar3():
             ( 1, 1 ),
             ( 2, 2 ),
         ]
-        assert grammar.path_query(graph) == answer
+        assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph3_grammar1():
+def test_cfpq_graph3_grammar1(algorithm):
     graph = GRAPH3
     grammar = GRAMMAR1
     answer = [
@@ -158,10 +164,10 @@ def test_hellings_graph3_grammar1():
         ( 4, 3 ),
         ( 4, 4 ),
     ]
-    assert grammar.path_query(graph) == answer
+    assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph3_grammar2():
+def test_cfpq_graph3_grammar2(algorithm):
     graph = GRAPH3
     grammar = GRAMMAR2
     answer = [
@@ -183,10 +189,10 @@ def test_hellings_graph3_grammar2():
         ( 4, 3 ),
         ( 4, 4 ),
     ]
-    assert grammar.path_query(graph) == answer
+    assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph3_grammar3():
+def test_cfpq_graph3_grammar3(algorithm):
     graph = GRAPH3
     for grammar in [GRAMMAR3a, GRAMMAR3b]:
         answer = [
@@ -198,10 +204,10 @@ def test_hellings_graph3_grammar3():
             ( 3, 3 ),
             ( 4, 4 ),
         ]
-        assert grammar.path_query(graph) == answer
+        assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph4_grammar1():
+def test_cfpq_graph4_grammar1(algorithm):
     graph = GRAPH4
     grammar = GRAMMAR1
     answer = [
@@ -210,10 +216,10 @@ def test_hellings_graph4_grammar1():
         (1, 1),
         (2, 2),
     ]
-    assert grammar.path_query(graph) == answer
+    assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph4_grammar2():
+def test_cfpq_graph4_grammar2(algorithm):
     graph = GRAPH4
     grammar = GRAMMAR2
     answer = [
@@ -222,10 +228,10 @@ def test_hellings_graph4_grammar2():
         (1, 2),
         (2, 2),
     ]
-    assert grammar.path_query(graph) == answer
+    assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph4_grammar3():
+def test_cfpq_graph4_grammar3(algorithm):
     graph = GRAPH4
     for grammar in [GRAMMAR3a, GRAMMAR3b]:
         answer = [
@@ -235,25 +241,25 @@ def test_hellings_graph4_grammar3():
             (1, 1),
             (2, 2),
         ]
-        assert grammar.path_query(graph) == answer
+        assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph5_grammar1():
+def test_cfpq_graph5_grammar1(algorithm):
     graph = GRAPH5
     grammar = GRAMMAR1
     answer = []
-    assert grammar.path_query(graph) == answer
+    assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph5_grammar2():
+def test_cfpq_graph5_grammar2(algorithm):
     graph = GRAPH5
     grammar = GRAMMAR2
     answer = []
-    assert grammar.path_query(graph) == answer
+    assert grammar.clone().path_query(graph, algorithm) == answer
 
 
-def test_hellings_graph5_grammar3():
+def test_cfpq_graph5_grammar3(algorithm):
     graph = GRAPH5
     for grammar in [GRAMMAR3a, GRAMMAR3b]:
         answer = []
-        assert grammar.path_query(graph) == answer
+        assert grammar.clone().path_query(graph, algorithm) == answer
