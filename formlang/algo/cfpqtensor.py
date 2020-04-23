@@ -93,7 +93,6 @@ def path_query_tensor(grammar, graph):
     t = csr_matrix((k, k), dtype=bool)
     while keep_going:
         keep_going = False
-        t *= False
         for symbol in symbols:
             t += kron(matrices[symbol], g_matrices[symbol], "csr")
 
@@ -107,22 +106,20 @@ def path_query_tensor(grammar, graph):
 
         upd = dict()
 
-        for i in range(k):
-            for j in range(k):
-                if not t[i, j]:
-                    continue
-                s = i // n
-                f = j // n
-                x = i % n
-                y = j % n
-                if s not in start_states or f not in term_states:
-                    continue
-                for sym in sym_states[s]:
-                    if not g_matrices[sym][x, y]:
-                        if sym not in upd:
-                            upd[sym] = lil_matrix((n, n), dtype=bool)
-                        upd[sym][x, y] = True
-                        keep_going = True
+        nzx, nzy = t.nonzero()
+        for i, j in zip(nzx, nzy):
+            s = i // n
+            f = j // n
+            x = i % n
+            y = j % n
+            if s not in start_states or f not in term_states:
+                continue
+            for sym in sym_states[s]:
+                if not g_matrices[sym][x, y]:
+                    if sym not in upd:
+                        upd[sym] = lil_matrix((n, n), dtype=bool)
+                    upd[sym][x, y] = True
+                    keep_going = True
 
         for symbol, x in upd.items():
             g_matrices[symbol] += x.tocsr()
