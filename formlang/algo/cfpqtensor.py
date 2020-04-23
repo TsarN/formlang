@@ -89,21 +89,21 @@ def path_query_tensor(grammar, graph):
     # Step 5. Do the computation
 
     keep_going = True
+    k = n * m
+    t = csr_matrix((k, k), dtype=bool)
     while keep_going:
         keep_going = False
-
-        k = n * m
-        t = csr_matrix((k, k), dtype=bool)
+        t *= False
         for symbol in symbols:
-            tmp = kron(matrices[symbol], g_matrices[symbol], "csr")
-            t += tmp.tocsr()
+            t += kron(matrices[symbol], g_matrices[symbol], "csr")
 
         # Transitive closure
+        last = -1
         for i in range(k):
-            new = t + t * t
-            if (new != t).count_nonzero() == 0:
+            t += t * t
+            if t.count_nonzero() == last:
                 break
-            t = new
+            last = t.count_nonzero()
 
         upd = dict()
 
