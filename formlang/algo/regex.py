@@ -25,7 +25,7 @@ def tokenize(s):
     cur = ""
 
     for ch in s:
-        if not ch.isalnum() and ch != "_":
+        if not ch.isalnum() and ch not in "_@":
             if cur and cur != "eps":
                 res.append(cur)
             if not ch.isspace():
