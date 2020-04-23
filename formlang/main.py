@@ -5,6 +5,7 @@ import click
 from formlang.contextfree import Grammar
 from formlang.graph import read_graph_from_file
 from formlang.benchmark import benchmark_cfpq
+from formlang.query import read_tokenized_query, validate_tokenized_query
 
 
 @click.group()
@@ -44,6 +45,16 @@ def cfpq(grammar, graph, output, algorithm):
     res = grammar.path_query(graph, algorithm)
     print(grammar.serialize(), file=output)
     print("\n".join(map("{0[0]} {0[1]}".format, res)), file=output)
+
+
+@cli.command()
+@click.argument("query", type=click.File("r"))
+def verifyquery(query):
+    query = read_tokenized_query(query)
+    if validate_tokenized_query(query):
+        print("YES")
+    else:
+        print("NO")
 
 
 @cli.command()

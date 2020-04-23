@@ -2,9 +2,10 @@ from formlang.contextfree import Terminal, Nonterminal, Production, Grammar
 
 
 class TokenStream:
-    def __init__(self, tokens):
+    def __init__(self, tokens, extmode):
         self.tokens = tokens
         self.position = 0
+        self.extmode = extmode
 
     def eof(self):
         return self.position >= len(self.tokens)
@@ -24,7 +25,7 @@ def tokenize(s):
     cur = ""
 
     for ch in s:
-        if not ch.isalnum():
+        if not ch.isalnum() and ch != "_":
             if cur and cur != "eps":
                 res.append(cur)
             if not ch.isspace():
@@ -39,9 +40,9 @@ def tokenize(s):
     return res
 
 
-def productions_from_regex(lhs, regex):
+def productions_from_regex(lhs, regex, extmode=False):
     tokens = tokenize(regex)
-    return _expr(TokenStream(tokens), lhs)
+    return _expr(TokenStream(tokens, extmode), lhs)
 
 
 def _expr(s, lhs):
@@ -121,9 +122,9 @@ def _unit(s, lhs):
             raise ValueError("Invalid regex")
         return t
 
-    if ch.isupper():
-        ch = Nonterminal(ch)
-    else:
+    if ch.islower() ^ s.extmode:
         ch = Terminal(ch)
+    else:
+        ch = Nonterminal(ch)
 
     return [Production(lhs, [ch])]

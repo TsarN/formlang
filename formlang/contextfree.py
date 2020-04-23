@@ -32,7 +32,7 @@ class Nonterminal:
         else:
             self.__class__.instances += 1
             n = self.__class__.instances
-            self.name = f"A{n}"
+            self.name = f"@@{n}"
 
     def __str__(self):
         return self.name
@@ -91,8 +91,9 @@ class Production:
     def deserialize_extended(cls, s):
         from formlang.algo.regex import productions_from_regex
         lhs, regex = s.split(" ", 1)
+        extmode = lhs.islower()
         lhs = Nonterminal(lhs)
-        return productions_from_regex(lhs, regex), lhs
+        return productions_from_regex(lhs, regex, extmode), lhs
 
     def clone(self):
         return Production(self.lhs, self.rhs)
