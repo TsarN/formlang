@@ -6,21 +6,29 @@ Statements are separated by semicolons.
 
 Connect to database:
 
-    connect "./path/to/db";
+```
+connect "./path/to/db";
+```
 
 List graphs:
 
-    list graphs;
+```
+list graphs;
+```
 
 Specify grammar:
 
-    S = eps | a S b S;
+```
+S = eps | a S b S;
+```
 
 Execute a context free path query:
 
-    select u, v from "graph" where path(u, v, S);
-    select count(v) from "graph" where path(_, v, S);
-    select exists(u, v) from "graph" where path(u.id = 10, v, S);
+```
+select u, v from "graph" where path(u, v, S);
+select count(v) from "graph" where path(_, v, S);
+select exists(u, v) from "graph" where path(u.id = 10, v, S);
+```
 
 ## Syntax
 
@@ -40,7 +48,7 @@ vexpr = IDENT
 vexpr = UNDERSCORE
 vexpr = IDENT DOT KW_ID EQ INT
 pattern = seq
-pattern = seq PIPE patter
+pattern = seq PIPE pattern
 seq = star
 seq = star seq
 star = unit

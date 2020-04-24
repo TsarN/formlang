@@ -32,7 +32,7 @@ class Nonterminal:
         else:
             self.__class__.instances += 1
             n = self.__class__.instances
-            self.name = f"@@{n}"
+            self.name = f"NEW{n}"
 
     def __str__(self):
         return self.name

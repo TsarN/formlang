@@ -1,3 +1,4 @@
+import io
 from formlang.contextfree import Grammar
 
 QL_SYNTAX = Grammar.deserialize("""\
@@ -16,7 +17,7 @@ vexpr IDENT
 vexpr UNDERSCORE
 vexpr IDENT DOT KW_ID EQ INT
 pattern seq
-pattern seq PIPE patter
+pattern seq PIPE pattern
 seq star
 seq star seq
 star unit
@@ -32,6 +33,10 @@ def read_tokenized_query(file_obj):
     for line in file_obj:
         tokens += line.strip().split()
     return tokens
+
+
+def read_tokenized_query_from_string(s):
+    return read_tokenized_query(io.StringIO(s))
 
 
 def validate_tokenized_query(query):

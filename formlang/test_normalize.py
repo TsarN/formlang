@@ -9,17 +9,17 @@ S eps
 S a S a
 S b S b
 """, """\
-@@2 eps
-@@2 @@3 @@5
-@@2 @@4 @@6
-S @@3 @@5
-@@5 S @@3
-S @@4 @@6
-@@6 S @@4
-@@3 a
-@@4 b
-@@5 a
-@@6 b
+NEW2 eps
+NEW2 NEW3 NEW5
+NEW2 NEW4 NEW6
+S NEW3 NEW5
+NEW5 S NEW3
+S NEW4 NEW6
+NEW6 S NEW4
+NEW3 a
+NEW4 b
+NEW5 a
+NEW6 b
 """),
 
     # Same thing, but with empty word disallowed
@@ -30,18 +30,18 @@ S b b
 S a S a
 S b S b
 """, """\
-@@2 @@3 @@3
-@@2 @@4 @@4
-@@2 @@3 @@5
-@@2 @@4 @@6
-S @@3 @@3
-S @@4 @@4
-S @@3 @@5
-@@5 S @@3
-S @@4 @@6
-@@6 S @@4
-@@3 a
-@@4 b
+NEW2 NEW3 NEW3
+NEW2 NEW4 NEW4
+NEW2 NEW3 NEW5
+NEW2 NEW4 NEW6
+S NEW3 NEW3
+S NEW4 NEW4
+S NEW3 NEW5
+NEW5 S NEW3
+S NEW4 NEW6
+NEW6 S NEW4
+NEW3 a
+NEW4 b
 """),
 
     # Well-formed parentheses
@@ -51,15 +51,15 @@ S S S
 S a S b
 S a b
 """, """\
-@@2 S S
-@@2 @@3 @@5
-@@2 @@3 @@4
+NEW2 S S
+NEW2 NEW3 NEW5
+NEW2 NEW3 NEW4
 S S S
-S @@3 @@5
-@@5 S @@4
-S @@3 @@4
-@@3 a
-@@4 b
+S NEW3 NEW5
+NEW5 S NEW4
+S NEW3 NEW4
+NEW3 a
+NEW4 b
 """),
 
     # Unequal number of a's and b's
@@ -77,54 +77,54 @@ V a V b V
 V b V a V
 V eps
 """, """
-@@2 V @@5
-@@2 @@3 T
-@@2 V @@6
-@@2 @@3 V
-@@2 T @@7
-@@2 V @@8
-@@2 @@4 U
-@@2 V @@9
-@@2 @@4 V
-@@2 U @@10
-@@2 a
-@@2 b
-T V @@5
-@@5 @@3 T
-T V @@6
-@@6 @@3 V
-T T @@7
-@@7 @@3 V
-U V @@8
-@@8 @@4 U
-U V @@9
-@@9 @@4 V
-U U @@10
-@@10 @@4 V
-V @@3 @@11
-@@11 V @@12
-@@12 @@4 V
-V @@4 @@13
-@@13 V @@14
-@@14 @@3 V
-@@3 a
-@@4 b
-T @@3 T
-T @@3 V
-U @@4 U
-U @@4 V
-@@11 @@4 V
-@@13 @@3 V
+NEW2 V NEW5
+NEW2 NEW3 T
+NEW2 V NEW6
+NEW2 NEW3 V
+NEW2 T NEW7
+NEW2 V NEW8
+NEW2 NEW4 U
+NEW2 V NEW9
+NEW2 NEW4 V
+NEW2 U NEW10
+NEW2 a
+NEW2 b
+T V NEW5
+NEW5 NEW3 T
+T V NEW6
+NEW6 NEW3 V
+T T NEW7
+NEW7 NEW3 V
+U V NEW8
+NEW8 NEW4 U
+U V NEW9
+NEW9 NEW4 V
+U U NEW10
+NEW10 NEW4 V
+V NEW3 NEW11
+NEW11 V NEW12
+NEW12 NEW4 V
+V NEW4 NEW13
+NEW13 V NEW14
+NEW14 NEW3 V
+NEW3 a
+NEW4 b
+T NEW3 T
+T NEW3 V
+U NEW4 U
+U NEW4 V
+NEW11 NEW4 V
+NEW13 NEW3 V
 T a
-@@13 a
-@@7 a
-@@6 a
-@@14 a
+NEW13 a
+NEW7 a
+NEW6 a
+NEW14 a
 U b
-@@12 b
-@@11 b
-@@10 b
-@@9 b
+NEW12 b
+NEW11 b
+NEW10 b
+NEW9 b
 """)
 ]
 
@@ -150,7 +150,7 @@ A B S B
     Nonterminal.instances = 0
     g.eliminate_start()
     assert(g == Grammar.deserialize("""\
-@@1 S
+NEW1 S
 S A B
 S eps
 A a
@@ -169,14 +169,14 @@ B A d
     Nonterminal.instances = 0
     g.eliminate_nonsolitary_terminals()
     assert(g == Grammar.deserialize("""\
-S @@1 B A @@2 @@1 B A @@3
-A @@3 S @@3
+S NEW1 B A NEW2 NEW1 B A NEW3
+A NEW3 S NEW3
 A eps
-B A @@4
-@@1 a
-@@2 b
-@@3 c
-@@4 d
+B A NEW4
+NEW1 a
+NEW2 b
+NEW3 c
+NEW4 d
 """))
 
 
@@ -193,17 +193,17 @@ D u S v
     Nonterminal.instances = 0
     g.eliminate_long_productions()
     assert(g == Grammar.deserialize("""\
-S A @@1
-@@1 B @@2
-@@2 C D
+S A NEW1
+NEW1 B NEW2
+NEW2 C D
 A eps
 A A A
 A a
-B w @@3
-@@3 o w
+B w NEW3
+NEW3 o w
 C A
-D u @@4
-@@4 S v
+D u NEW4
+NEW4 S v
 """))
 
 def test_eliminate_epsilon():
