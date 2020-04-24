@@ -9,17 +9,17 @@ S eps
 S a S a
 S b S b
 """, """\
-A2 eps
-A2 A3 A5
-A2 A4 A6
-S A3 A5
-A5 S A3
-S A4 A6
-A6 S A4
-A3 a
-A4 b
-A5 a
-A6 b
+NEW2 eps
+NEW2 NEW3 NEW5
+NEW2 NEW4 NEW6
+S NEW3 NEW5
+NEW5 S NEW3
+S NEW4 NEW6
+NEW6 S NEW4
+NEW3 a
+NEW4 b
+NEW5 a
+NEW6 b
 """),
 
     # Same thing, but with empty word disallowed
@@ -30,18 +30,18 @@ S b b
 S a S a
 S b S b
 """, """\
-A2 A3 A3
-A2 A4 A4
-A2 A3 A5
-A2 A4 A6
-S A3 A3
-S A4 A4
-S A3 A5
-A5 S A3
-S A4 A6
-A6 S A4
-A3 a
-A4 b
+NEW2 NEW3 NEW3
+NEW2 NEW4 NEW4
+NEW2 NEW3 NEW5
+NEW2 NEW4 NEW6
+S NEW3 NEW3
+S NEW4 NEW4
+S NEW3 NEW5
+NEW5 S NEW3
+S NEW4 NEW6
+NEW6 S NEW4
+NEW3 a
+NEW4 b
 """),
 
     # Well-formed parentheses
@@ -51,15 +51,15 @@ S S S
 S a S b
 S a b
 """, """\
-A2 S S
-A2 A3 A5
-A2 A3 A4
+NEW2 S S
+NEW2 NEW3 NEW5
+NEW2 NEW3 NEW4
 S S S
-S A3 A5
-A5 S A4
-S A3 A4
-A3 a
-A4 b
+S NEW3 NEW5
+NEW5 S NEW4
+S NEW3 NEW4
+NEW3 a
+NEW4 b
 """),
 
     # Unequal number of a's and b's
@@ -77,54 +77,54 @@ V a V b V
 V b V a V
 V eps
 """, """
-A2 V A5
-A2 A3 T
-A2 V A6
-A2 A3 V
-A2 T A7
-A2 V A8
-A2 A4 U
-A2 V A9
-A2 A4 V
-A2 U A10
-A2 a
-A2 b
-T V A5
-A5 A3 T
-T V A6
-A6 A3 V
-T T A7
-A7 A3 V
-U V A8
-A8 A4 U
-U V A9
-A9 A4 V
-U U A10
-A10 A4 V
-V A3 A11
-A11 V A12
-A12 A4 V
-V A4 A13
-A13 V A14
-A14 A3 V
-A3 a
-A4 b
-T A3 T
-T A3 V
-U A4 U
-U A4 V
-A11 A4 V
-A13 A3 V
+NEW2 V NEW5
+NEW2 NEW3 T
+NEW2 V NEW6
+NEW2 NEW3 V
+NEW2 T NEW7
+NEW2 V NEW8
+NEW2 NEW4 U
+NEW2 V NEW9
+NEW2 NEW4 V
+NEW2 U NEW10
+NEW2 a
+NEW2 b
+T V NEW5
+NEW5 NEW3 T
+T V NEW6
+NEW6 NEW3 V
+T T NEW7
+NEW7 NEW3 V
+U V NEW8
+NEW8 NEW4 U
+U V NEW9
+NEW9 NEW4 V
+U U NEW10
+NEW10 NEW4 V
+V NEW3 NEW11
+NEW11 V NEW12
+NEW12 NEW4 V
+V NEW4 NEW13
+NEW13 V NEW14
+NEW14 NEW3 V
+NEW3 a
+NEW4 b
+T NEW3 T
+T NEW3 V
+U NEW4 U
+U NEW4 V
+NEW11 NEW4 V
+NEW13 NEW3 V
 T a
-A13 a
-A7 a
-A6 a
-A14 a
+NEW13 a
+NEW7 a
+NEW6 a
+NEW14 a
 U b
-A12 b
-A11 b
-A10 b
-A9 b
+NEW12 b
+NEW11 b
+NEW10 b
+NEW9 b
 """)
 ]
 
@@ -150,7 +150,7 @@ A B S B
     Nonterminal.instances = 0
     g.eliminate_start()
     assert(g == Grammar.deserialize("""\
-A1 S
+NEW1 S
 S A B
 S eps
 A a
@@ -169,14 +169,14 @@ B A d
     Nonterminal.instances = 0
     g.eliminate_nonsolitary_terminals()
     assert(g == Grammar.deserialize("""\
-S A1 B A A2 A1 B A A3
-A A3 S A3
+S NEW1 B A NEW2 NEW1 B A NEW3
+A NEW3 S NEW3
 A eps
-B A A4
-A1 a
-A2 b
-A3 c
-A4 d
+B A NEW4
+NEW1 a
+NEW2 b
+NEW3 c
+NEW4 d
 """))
 
 
@@ -193,17 +193,17 @@ D u S v
     Nonterminal.instances = 0
     g.eliminate_long_productions()
     assert(g == Grammar.deserialize("""\
-S A A1
-A1 B A2
-A2 C D
+S A NEW1
+NEW1 B NEW2
+NEW2 C D
 A eps
 A A A
 A a
-B w A3
-A3 o w
+B w NEW3
+NEW3 o w
 C A
-D u A4
-A4 S v
+D u NEW4
+NEW4 S v
 """))
 
 def test_eliminate_epsilon():
