@@ -1,11 +1,12 @@
 import sys
 
+from antlr4 import InputStream
 import click
 
 from formlang.contextfree import Grammar
 from formlang.graph import read_graph_from_file
 from formlang.benchmark import benchmark_cfpq
-from formlang.query import read_tokenized_query, validate_tokenized_query
+from formlang.query import parse_query, print_tree_as_dot
 
 
 @click.group()
@@ -49,12 +50,12 @@ def cfpq(grammar, graph, output, algorithm):
 
 @cli.command()
 @click.argument("query", type=click.File("r"))
-def verifyquery(query):
-    query = read_tokenized_query(query)
-    if validate_tokenized_query(query):
-        print("YES")
-    else:
-        print("NO")
+def parsequery(query):
+    stream = InputStream(query.read())
+    parsed = parse_query(stream)
+    if not parsed:
+        sys.exit(1)
+    print_tree_as_dot(parsed)
 
 
 @cli.command()

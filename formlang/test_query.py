@@ -1,33 +1,34 @@
-from formlang.query import *
+from antlr4 import InputStream
+from formlang.query import verify_query
 
 
 def f(s):
-    return validate_tokenized_query(read_tokenized_query_from_string(s))
+    return verify_query(InputStream(s))
 
 
 def test_query_connect():
-    assert f("KW_CONNECT STRING SEMICOLON")
-    assert not f("KW_CONNECT STRING")
-    assert not f("KW_CONNECT SEMICOLON")
+    assert f("connect \"database\";")
+    assert not f("connect \"database\"")
+    assert not f("connect;")
 
 def test_query_list_graphs():
-    assert f("KW_LIST KW_GRAPHS SEMICOLON")
-    assert not f("KW_LIST KW_GRAPHS")
-    assert not f("KW_LIST SEMICOLON")
+    assert f("list graphs;")
+    assert not f("list graphs")
+    assert not f("list;")
 
 def test_query_grammar():
-    assert f("NONTERMINAL EQ IDENT SEMICOLON")
-    assert not f("NONTERMINAL EQ SEMICOLON")
-    assert f("NONTERMINAL EQ IDENT PIPE LBR IDENT NONTERMINAL IDENT NONTERMINAL RBR STAR SEMICOLON")
-    assert not f("NONTERMINAL EQ LBR IDENT NONTERMINAL IDENT NONTERMINAL STAR SEMICOLON")
+    assert f("S = a;")
+    assert not f("S =;")
+    assert f("S = a | ( b S c S ) * ;")
+    assert not f("S = ( b S c S * ;")
 
 def test_query_select():
-    assert f("KW_SELECT IDENT KW_FROM STRING KW_WHERE KW_PATH LBR UNDERSCORE COMMA UNDERSCORE COMMA NONTERMINAL RBR SEMICOLON")
-    assert f("KW_SELECT IDENT COMMA IDENT KW_FROM STRING KW_WHERE KW_PATH LBR UNDERSCORE COMMA UNDERSCORE COMMA NONTERMINAL RBR SEMICOLON")
-    assert f("KW_SELECT IDENT COMMA IDENT KW_FROM STRING KW_WHERE KW_PATH LBR UNDERSCORE COMMA IDENT DOT KW_ID EQ INT COMMA NONTERMINAL RBR SEMICOLON")
-    assert f("KW_SELECT IDENT KW_FROM STRING KW_WHERE KW_PATH LBR UNDERSCORE COMMA UNDERSCORE COMMA NONTERMINAL STAR RBR SEMICOLON")
-    assert f("KW_SELECT IDENT KW_FROM STRING KW_WHERE KW_PATH LBR UNDERSCORE COMMA UNDERSCORE COMMA NONTERMINAL PIPE IDENT STAR RBR SEMICOLON")
-    assert not f("KW_SELECT IDENT STRING KW_WHERE KW_PATH LBR UNDERSCORE COMMA UNDERSCORE COMMA NONTERMINAL PIPE IDENT STAR RBR SEMICOLON")
-    assert not f("KW_SELECT KW_FROM STRING KW_WHERE KW_PATH LBR UNDERSCORE COMMA UNDERSCORE COMMA NONTERMINAL RBR SEMICOLON")
-    assert not f("KW_SELECT IDENT KW_FROM STRING KW_WHERE KW_PATH UNDERSCORE COMMA UNDERSCORE COMMA NONTERMINAL SEMICOLON")
-    assert not f("KW_SELECT IDENT KW_FROM STRING SEMICOLON")
+    assert f("select a from \"graph\" where path ( _, _, S);")
+    assert f("select a , a from \"graph\" where path ( _, _, S);")
+    assert f("select a , a from \"graph\" where path ( _, a.id = 1234, S);")
+    assert f("select a from \"graph\" where path( _, _, S*);")
+    assert f("select a from \"graph\" where path( _, _, S | a*);")
+    assert not f("select a \"graph\" where path( _, _, S | a*);")
+    assert not f("select from \"graph\" where path( _, _, S);")
+    assert not f("select a from \"graph\" where path _, _, S;")
+    assert not f("select a from \"graph\" ;")
