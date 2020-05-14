@@ -27,7 +27,7 @@ whereexpr : KW_PATH LBR vexpr COMMA vexpr COMMA pattern RBR;
 
 vexpr : IDENT | UNDERSCORE | IDENT DOT KW_ID EQ INT;
 
-pattern : seq (PIPE pattern)?;
+pattern : seq (PIPE seq)*;
 seq : star+;
 star : unit STAR?;
 unit : NONTERMINAL | IDENT | LBR pattern RBR;

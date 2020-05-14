@@ -9,6 +9,7 @@ from antlr4.tree.Tree import TerminalNode
 from formlang.contextfree import Grammar
 from formlang.query.queryLexer import queryLexer
 from formlang.query.queryParser import queryParser
+from formlang.query.visitor import QueryVisitor
 
 
 class ParseError(Exception):
@@ -37,11 +38,10 @@ def parse_query(what):
     lexer = queryLexer(what)
     stream = CommonTokenStream(lexer)
     parser = queryParser(stream)
-    parser.addErrorListener(MyErrorListener())
-    try:
-        return parser.script()
-    except ParseError:
-        return None
+    tree = parser.script()
+    visitor = QueryVisitor()
+    visitor.visitScript(tree)
+    return visitor.statements
 
 
 def verify_query(what):
