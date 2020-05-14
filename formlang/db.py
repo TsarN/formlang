@@ -22,12 +22,13 @@ class FileDatabase:
 class DictDatabase:
     def __init__(self, data):
         self.data = data
+        self.path = None
 
     def get_graph(self, name):
         return read_graph_from_file(io.StringIO(self.data[name]))
 
     def list_graphs(self):
-        return list(self.data)
+        return sorted(list(self.data))
 
 
 class Executor:
