@@ -1,0 +1,12 @@
+.vscode
+__pycache__
+.pytest_cache
+*.pyc
+.antlr
+query.interp
+query.tokens
+queryLexer.interp
+queryLexer.py
+queryLexer.tokens
+queryListener.py
+queryParser.py

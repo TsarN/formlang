@@ -3,7 +3,11 @@ language: python
 python:
     - "3.8"
 
+before_install:
+    - sudo apt-get -y install antlr4
+
 install:
+    - ./prepare.sh
     - pip install pipenv
     - pipenv sync
 
