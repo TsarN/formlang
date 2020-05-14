@@ -10,3 +10,4 @@ queryLexer.py
 queryLexer.tokens
 queryListener.py
 queryParser.py
+queryVisitor.py
