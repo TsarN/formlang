@@ -6,7 +6,8 @@ import click
 from formlang.contextfree import Grammar
 from formlang.graph import read_graph_from_file
 from formlang.benchmark import benchmark_cfpq
-from formlang.query import parse_query, print_tree_as_dot
+from formlang.query import parse_query, print_tree_as_dot, ParseError
+from formlang.db import Executor, FileDatabase
 
 
 @click.group()
@@ -50,12 +51,16 @@ def cfpq(grammar, graph, output, algorithm):
 
 @cli.command()
 @click.argument("query", type=click.File("r"))
-def parsequery(query):
+def run(query):
     stream = InputStream(query.read())
-    parsed = parse_query(stream)
-    if not parsed:
+    try:
+        parsed = parse_query(stream)
+    except ParseError:
+        print("Parse error")
         sys.exit(1)
-    print_tree_as_dot(parsed)
+
+    executor = Executor(FileDatabase())
+    executor.execute_many(parsed)
 
 
 @cli.command()

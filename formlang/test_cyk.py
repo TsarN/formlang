@@ -1,5 +1,5 @@
 from formlang.contextfree import *
-from formlang.samplegrammars import *
+from formlang.samples import *
 
 def test_even_palindromes():
     g = Grammar.deserialize(even_palindromes)
