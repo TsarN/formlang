@@ -16,7 +16,7 @@ class FileDatabase:
             return read_graph_from_file(f)
 
     def list_graphs(self):
-        return os.listdir(self.path)
+        return sorted(os.listdir(self.path))
 
 
 class DictDatabase:

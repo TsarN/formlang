@@ -1,47 +1,21 @@
 from antlr4 import InputStream
-from formlang.db import Executor, DictDatabase
+from formlang.db import Executor, DictDatabase, FileDatabase
 from formlang.query import parse_query
+from formlang.samples import sample_graphs
 
 import pytest
 
 
-SAMPLE_GRAPHS = {
-    "g1": """\
-0 a 1
-1 a 2
-2 a 0
-2 b 3
-3 b 2
-""",
-    "g2": """\
-0 a 1
-1 a 0
-1 b 2
-2 b 1
-""",
-    "g3": """\
-0 a 1
-1 a 2
-2 a 0
-2 b 3
-3 b 4
-4 b 2
-""",
-    "g4": """\
-0 a 0
-0 b 1
-1 b 2
-2 a 2
-""",
-    "g5": ""
-}
-
-
-def f(s):
+def f(s, real_fs=False):
     stream = InputStream(s)
     parsed = parse_query(stream)
 
-    executor = Executor(DictDatabase(SAMPLE_GRAPHS))
+    if real_fs:
+        db = FileDatabase()
+    else:
+        db = DictDatabase(sample_graphs)
+
+    executor = Executor(db)
     executor.execute_many(parsed)
     return executor
 
@@ -59,6 +33,23 @@ g3
 g4
 g5
 """
+
+def test_real_fs(capsys, tmp_path):
+    names = ["foo", "bar", "baz"]
+    for i in names:
+        (tmp_path / i).write_text("1 a 2\n")
+
+    assert f(f"""
+connect "{tmp_path}";
+list graphs;
+""", True).db.path == str(tmp_path)
+
+    assert capsys.readouterr().out == """\
+bar
+baz
+foo
+"""
+
 
 def test_query_symbol(capsys):
     f('select exists(_) from "g1" where path(_, _, a);')

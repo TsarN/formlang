@@ -4,10 +4,11 @@ python:
     - "3.8"
 
 before_install:
-    - sudo apt-get -y install antlr4
+    - sudo apt-get -y install default-jre wget
+    - wget "https://www.antlr.org/download/antlr-4.8-complete.jar" -O antlr.jar
 
 install:
-    - ./prepare.sh
+    - ./prepare.sh travis
     - pip install pipenv
     - pipenv sync
 
