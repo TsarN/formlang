@@ -50,14 +50,37 @@ class Executor:
             self.ctx.start = tmp
             graph = self.db.get_graph(statement.graph_name)
             result = self.ctx.path_query(graph)
-            # TODO: do something more sophisticated
-            if result:
-                print("TRUE")
+            result = list(self.process_result(statement, result))
+
+            if statement.operator == Operator.COUNT:
+                print(len(result))
+            elif statement.operator == Operator.EXISTS:
+                if result:
+                    print("TRUE")
+                else:
+                    print("FALSE")
             else:
-                print("FALSE")
+                for row in sorted(result):
+                    print(*map(str, row))
         else:
             raise ValueError("Invalid statement")
 
     def execute_many(self, statements):
         for statement in statements:
             self.execute(statement)
+
+    def process_result(self, statement: SelectStatement, result):
+        for vp in result:
+            row = {}
+
+            for v, expr in zip(vp, (statement.path_from, statement.path_to)):
+                if expr.vid is not None:
+                    if expr.vid != v:
+                        break
+                if expr.name is not None:
+                    row[expr.name] = v
+            else:
+                res = []
+                for col in statement.columns:
+                    res.append(row.get(col))
+                yield res
