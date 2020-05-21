@@ -47,8 +47,30 @@ class QueryVisitor(queryVisitor):
             self.visit(ctx.pattern()),
         )
 
+    def visitVsinfo(self, ctx:queryParser.VsinfoContext):
+        return list(map(str, ctx.IDENT()))
+
+    def visitObjexpr(self, ctx:queryParser.ObjexprContext):
+        if ctx.KW_COUNT():
+            op = Operator.COUNT
+        elif ctx.KW_EXISTS():
+            op = Operator.EXISTS
+        else:
+            op = Operator.NONE
+
+        return (
+            op,
+            self.visit(ctx.vsinfo())
+        )
+
+
     def visitVexpr(self, ctx:queryParser.VexprContext):
-        return str(ctx.IDENT())
+        vexpr = VertexExpr(str(ctx.IDENT()), None)
+        if vexpr.name == "_":
+            vexpr.name = None
+        if ctx.KW_ID():
+            vexpr.vid = int(str(ctx.INT()))
+        return vexpr
 
     def visitConnect_statement(self, ctx:queryParser.Connect_statementContext):
         self.statements.append(ConnectStatement(str(ctx.STRING())[1:-1]))
@@ -65,5 +87,6 @@ class QueryVisitor(queryVisitor):
     def visitSelect_statement(self, ctx:queryParser.Select_statementContext):
         self.statements.append(SelectStatement(
             str(ctx.STRING())[1:-1],
+            *self.visit(ctx.objexpr()),
             *self.visit(ctx.whereexpr())
         ))
