@@ -74,6 +74,11 @@ class Production:
             return f"{self.lhs} eps"
         return f"{self.lhs} " + " ".join(map(str, self.rhs))
 
+    def to_script_line(self):
+        if not self.rhs:
+            return f"{self.lhs} = eps;"
+        return f"{self.lhs} = " + " ".join(map(str, self.rhs)) + ";"
+
     @classmethod
     def deserialize(cls, s):
         sp = s.split(" ")
@@ -143,6 +148,12 @@ class Grammar:
         for prod in self.productions:
             if prod.lhs != self.start:
                 res.append(prod.serialize())
+        return "\n".join(res)
+
+    def to_script(self):
+        res = []
+        for prod in self.productions:
+            res.append(prod.to_script_line())
         return "\n".join(res)
 
     def write_file(self, file_obj):
