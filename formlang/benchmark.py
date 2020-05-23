@@ -42,10 +42,10 @@ def measure(db_path, graph, grammar_path, algorithm):
     start = None
     with open(grammar_path, "r") as f:
         for line in f:
-            split = line.strip()
+            lhs, rhs = line.strip().split(" ", 1)
             if start is None:
-                start = split[0]
-            grammar += f"{split[0]} = {split[1:]};\n"
+                start = lhs
+            grammar += f"{lhs} = {rhs};\n"
 
     script = f"""
 connect "{db_path}";
