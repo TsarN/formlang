@@ -65,6 +65,5 @@ def run(query):
 
 @cli.command()
 @click.argument("path", type=click.Path(file_okay=False, exists=True))
-@click.argument("ds")
-def benchmark(path, ds):
-    benchmark_cfpq(path, ds)
+def benchmark(path):
+    benchmark_cfpq(path)

@@ -33,6 +33,8 @@ class QueryVisitor(queryVisitor):
         return ret
 
     def visitUnit(self, ctx:queryParser.UnitContext):
+        if ctx.KW_EPS():
+            return f"()"
         if ctx.NONTERMINAL():
             return str(ctx.NONTERMINAL())
         if ctx.IDENT():
@@ -55,6 +57,8 @@ class QueryVisitor(queryVisitor):
             op = Operator.COUNT
         elif ctx.KW_EXISTS():
             op = Operator.EXISTS
+        elif ctx.KW_UNIQUE():
+            op = Operator.UNIQUE
         else:
             op = Operator.NONE
 
@@ -76,7 +80,14 @@ class QueryVisitor(queryVisitor):
         self.statements.append(ConnectStatement(str(ctx.STRING())[1:-1]))
 
     def visitList_graphs_statement(self, ctx:queryParser.List_graphs_statementContext):
-        self.statements.append(ListGraphsStatement())
+        path = None
+        if ctx.STRING():
+            path = str(ctx.STRING())[1:-1]
+        self.statements.append(ListGraphsStatement(path))
+
+    def visitList_labels_statement(self, ctx:queryParser.List_labels_statementContext):
+        graph = str(ctx.STRING())[1:-1]
+        self.statements.append(ListLabelsStatement(graph))
 
     def visitRule_statement(self, ctx:queryParser.Rule_statementContext):
         self.statements.append(RuleStatement(
@@ -85,8 +96,14 @@ class QueryVisitor(queryVisitor):
         ))
 
     def visitSelect_statement(self, ctx:queryParser.Select_statementContext):
-        self.statements.append(SelectStatement(
-            str(ctx.STRING())[1:-1],
+        stmt = SelectStatement(
+            str(ctx.STRING(0))[1:-1],
             *self.visit(ctx.objexpr()),
-            *self.visit(ctx.whereexpr())
-        ))
+            *self.visit(ctx.whereexpr()),
+            algorithm="matrix"
+        )
+
+        if ctx.KW_USING():
+            stmt.algorithm = str(ctx.STRING(1))[1:-1]
+
+        self.statements.append(stmt)

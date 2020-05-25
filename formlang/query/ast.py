@@ -10,7 +10,11 @@ class ConnectStatement:
 
 @dataclass
 class ListGraphsStatement:
-    pass
+    path: Optional[str]
+
+@dataclass
+class ListLabelsStatement:
+    graph: str
 
 @dataclass
 class RuleStatement:
@@ -27,6 +31,7 @@ class Operator(Enum):
     NONE = 1
     EXISTS = 2
     COUNT = 3
+    UNIQUE = 4
 
 
 @dataclass
@@ -37,3 +42,4 @@ class SelectStatement:
     path_from: VertexExpr
     path_to: VertexExpr
     path_expr: str
+    algorithm: str

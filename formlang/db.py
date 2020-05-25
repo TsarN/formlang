@@ -15,8 +15,10 @@ class FileDatabase:
         with open(os.path.join(self.path, name)) as f:
             return read_graph_from_file(f)
 
-    def list_graphs(self):
-        return sorted(os.listdir(self.path))
+    def list_graphs(self, path=None):
+        if path is None:
+            path = self.path
+        return sorted(os.listdir(path))
 
 
 class DictDatabase:
@@ -27,7 +29,7 @@ class DictDatabase:
     def get_graph(self, name):
         return read_graph_from_file(io.StringIO(self.data[name]))
 
-    def list_graphs(self):
+    def list_graphs(self, path=None):
         return sorted(list(self.data))
 
 
@@ -40,7 +42,11 @@ class Executor:
         if type(statement) == ConnectStatement:
             self.db.path = statement.path
         elif type(statement) == ListGraphsStatement:
-            print("\n".join(self.db.list_graphs()))
+            print("\n".join(self.db.list_graphs(statement.path)))
+        elif type(statement) == ListLabelsStatement:
+            graph = self.db.get_graph(statement.graph)
+            for label in sorted(set(map(lambda x: x[2], graph.edges.data("symbol")))):
+                print(label)
         elif type(statement) == RuleStatement:
             self.ctx.productions += productions_from_regex(statement.lhs, statement.rhs)
         elif type(statement) == SelectStatement:
@@ -49,7 +55,7 @@ class Executor:
             self.ctx.productions += prods
             self.ctx.start = tmp
             graph = self.db.get_graph(statement.graph_name)
-            result = self.ctx.path_query(graph)
+            result = self.ctx.path_query(graph, statement.algorithm)
             result = list(self.process_result(statement, result))
 
             if statement.operator == Operator.COUNT:
@@ -60,6 +66,8 @@ class Executor:
                 else:
                     print("FALSE")
             else:
+                if statement.operator == Operator.UNIQUE:
+                    result = list(set(result))
                 for row in sorted(result):
                     print(*map(str, row))
         else:
@@ -83,4 +91,16 @@ class Executor:
                 res = []
                 for col in statement.columns:
                     res.append(row.get(col))
-                yield res
+                yield tuple(res)
+
+
+def execute_query(query):
+    stream = InputStream(query)
+    try:
+        parsed = parse_query(stream)
+    except ParseError:
+        print("Parse error")
+        sys.exit(1)
+
+    executor = Executor(FileDatabase())
+    executor.execute_many(parsed)
